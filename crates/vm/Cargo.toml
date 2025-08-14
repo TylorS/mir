@@ -1,0 +1,13 @@
+[package]
+name = "mir-vm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mir-types = { path = "../types" }
+mir-ast = { path = "../ast" }
+mir-runtime = { path = "../runtime" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+xxhash-rust = { workspace = true }
+thiserror = "1.0"

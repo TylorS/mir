@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main, development ]
+
+jobs:
+  rust:
+    name: Rust build, fmt, clippy, tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features: [ "", "--features serde_bincode2" ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Format check
+        run: cargo fmt --all -- --check | cat
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings | cat
+      - name: Build
+        run: cargo build -q ${{ matrix.features }} | cat
+      - name: Test
+        run: cargo test -q ${{ matrix.features }} | cat
+

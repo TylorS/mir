@@ -1,0 +1,11 @@
+[package]
+name = "mir-backend-wasi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mir-types = { path = "../types" }
+mir-ast = { path = "../ast" }
+mir-compiler = { path = "../compiler" }
+serde = { workspace = true }
+serde_json = { workspace = true }
