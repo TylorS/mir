@@ -40,6 +40,12 @@ pub enum MigrationStep {
     ValidateCompatibility,
 }
 
+impl Default for HMRCoordinator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HMRCoordinator {
     pub fn new() -> Self {
         HMRCoordinator {

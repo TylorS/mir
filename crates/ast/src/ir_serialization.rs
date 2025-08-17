@@ -29,7 +29,7 @@ impl IRVersion {
     /// Current IR serialization format version
     pub fn current() -> IRVersion {
         IRVersion {
-            major: 1,
+            major: 0,
             minor: 0,
             patch: 0,
             format_hash: ContentHash::new(b"mir_ir_v1.0.0"),
@@ -332,7 +332,7 @@ impl IRSerializer {
                 .unwrap_or_default()
                 .as_secs(),
             content_hash,
-            schema_version: SchemaVersion::new(current_version.format_hash),
+            schema_version: 1, // Use version 1 as default
             ir_content,
             metadata,
         })
@@ -369,6 +369,52 @@ impl IRSerializer {
                     self.collect_types_from_statement(stmt, type_definitions)?;
                 }
             }
+            Statement::StartSpan { body, attributes, .. } => {
+                for stmt in body {
+                    self.collect_types_from_statement(stmt, type_definitions)?;
+                }
+                // Collect types from attribute values
+                for value in attributes.values() {
+                    let type_hash = value.type_hash();
+                    let type_hash_str = type_hash.to_string();
+                    if let std::collections::hash_map::Entry::Vacant(e) = type_definitions.entry(type_hash_str) {
+                        let type_def = self.create_type_definition_from_value(value)?;
+                        e.insert(type_def);
+                    }
+                }
+            }
+            Statement::EndSpan { span, .. } => {
+                self.collect_types_from_expression(span, type_definitions)?;
+            }
+            Statement::WithSpan { span, body, .. } => {
+                self.collect_types_from_expression(span, type_definitions)?;
+                for stmt in body {
+                    self.collect_types_from_statement(stmt, type_definitions)?;
+                }
+            }
+            Statement::RecordMetric { value, labels, .. } => {
+                self.collect_types_from_expression(value, type_definitions)?;
+                // Collect types from label values
+                for label_value in labels.values() {
+                    let type_hash = label_value.type_hash();
+                    let type_hash_str = type_hash.to_string();
+                    if let std::collections::hash_map::Entry::Vacant(e) = type_definitions.entry(type_hash_str) {
+                        let type_def = self.create_type_definition_from_value(label_value)?;
+                        e.insert(type_def);
+                    }
+                }
+            }
+            Statement::LogEvent { attributes, .. } => {
+                // Collect types from attribute values
+                for value in attributes.values() {
+                    let type_hash = value.type_hash();
+                    let type_hash_str = type_hash.to_string();
+                    if let std::collections::hash_map::Entry::Vacant(e) = type_definitions.entry(type_hash_str) {
+                        let type_def = self.create_type_definition_from_value(value)?;
+                        e.insert(type_def);
+                    }
+                }
+            }
             _ => {}
         }
         Ok(())
@@ -383,9 +429,9 @@ impl IRSerializer {
             Expression::Literal { value, .. } => {
                 let type_hash = value.type_hash();
                 let type_hash_str = type_hash.to_string();
-                if !type_definitions.contains_key(&type_hash_str) {
+                if let std::collections::hash_map::Entry::Vacant(e) = type_definitions.entry(type_hash_str) {
                     let type_def = self.create_type_definition_from_value(value)?;
-                    type_definitions.insert(type_hash_str, type_def);
+                    e.insert(type_def);
                 }
             }
             Expression::FunctionCall {
@@ -400,6 +446,47 @@ impl IRSerializer {
             }
             Expression::Identifier { .. } => {
                 // Identifiers don't have literal types to collect
+            }
+            Expression::CreateSpan { parent_span, attributes, .. } => {
+                if let Some(parent) = parent_span {
+                    self.collect_types_from_expression(parent, type_definitions)?;
+                }
+                // Collect types from attribute values
+                for value in attributes.values() {
+                    let type_hash = value.type_hash();
+                    let type_hash_str = type_hash.to_string();
+                    if let std::collections::hash_map::Entry::Vacant(e) = type_definitions.entry(type_hash_str) {
+                        let type_def = self.create_type_definition_from_value(value)?;
+                        e.insert(type_def);
+                    }
+                }
+            }
+            Expression::SetSpanAttribute { span, value, .. } => {
+                self.collect_types_from_expression(span, type_definitions)?;
+                let type_hash = value.type_hash();
+                let type_hash_str = type_hash.to_string();
+                if let std::collections::hash_map::Entry::Vacant(e) = type_definitions.entry(type_hash_str) {
+                    let type_def = self.create_type_definition_from_value(value)?;
+                    e.insert(type_def);
+                }
+            }
+            Expression::AddSpanEvent { span, attributes, .. } => {
+                self.collect_types_from_expression(span, type_definitions)?;
+                // Collect types from attribute values
+                for value in attributes.values() {
+                    let type_hash = value.type_hash();
+                    let type_hash_str = type_hash.to_string();
+                    if let std::collections::hash_map::Entry::Vacant(e) = type_definitions.entry(type_hash_str) {
+                        let type_def = self.create_type_definition_from_value(value)?;
+                        e.insert(type_def);
+                    }
+                }
+            }
+            Expression::GetTraceContext { .. } => {
+                // No types to collect
+            }
+            Expression::SetTraceContext { context, .. } => {
+                self.collect_types_from_expression(context, type_definitions)?;
             }
         }
         Ok(())
@@ -477,7 +564,7 @@ impl IRSerializer {
                     primitive_type: "null".to_string(),
                 },
             ),
-            Value::Struct { fields, .. } => {
+            Value::Struct(fields) => {
                 let field_defs = fields
                     .iter()
                     .map(|(name, value)| FieldDefinition {
@@ -492,56 +579,43 @@ impl IRSerializer {
                     TypeDefinitionKind::Struct { fields: field_defs },
                 )
             }
-            Value::Array { element_type, .. } => (
-                "array".to_string(),
-                TypeDefinitionKind::Array {
-                    element_type: *element_type,
+            Value::Array(elements) => {
+                // Determine element type from first element or use a generic type
+                let element_type = if let Some(first) = elements.first() {
+                    first.type_hash()
+                } else {
+                    TypeHash::new(ContentHash::new(b"unknown"))
+                };
+                (
+                    "array".to_string(),
+                    TypeDefinitionKind::Array { element_type },
+                )
+            }
+            Value::Union { .. } => {
+                (
+                    "union".to_string(),
+                    TypeDefinitionKind::Union { types: Vec::new() },
+                )
+            }
+            Value::Record(_) => {
+                (
+                    "record".to_string(),
+                    TypeDefinitionKind::Struct { fields: Vec::new() },
+                )
+            }
+            Value::Undefined => (
+                "undefined".to_string(),
+                TypeDefinitionKind::Scalar {
+                    primitive_type: "undefined".to_string(),
                 },
-            ),
-            Value::Function { .. } => {
-                // Placeholder function signature
-                let signature = FunctionSignature {
-                    parameter_types: Vec::new(),
-                    return_type: TypeHash::new(ContentHash::new(b"unknown")),
-                    is_pure: false,
-                    is_async: false,
-                };
-                (
-                    "function".to_string(),
-                    TypeDefinitionKind::Function { signature },
-                )
-            }
-            Value::Closure { .. } => {
-                let signature = FunctionSignature {
-                    parameter_types: Vec::new(),
-                    return_type: TypeHash::new(ContentHash::new(b"unknown")),
-                    is_pure: false,
-                    is_async: false,
-                };
-                (
-                    "closure".to_string(),
-                    TypeDefinitionKind::Function { signature },
-                )
-            }
-            Value::Continuation { .. } => {
-                let signature = FunctionSignature {
-                    parameter_types: Vec::new(),
-                    return_type: TypeHash::new(ContentHash::new(b"unknown")),
-                    is_pure: false,
-                    is_async: false,
-                };
-                (
-                    "continuation".to_string(),
-                    TypeDefinitionKind::Function { signature },
-                )
-            }
+            )
         };
 
         Ok(TypeDefinition {
             type_hash,
             name,
             definition,
-            schema_version: value.schema_version(),
+            schema_version: 1, // Use version 1 as default
         })
     }
 
@@ -601,8 +675,8 @@ impl IRDeserializer {
             let current_version = IRVersion::current();
             if !current_version.is_compatible(&serialized_ir.version) {
                 return Err(SerializationError::VersionMismatch {
-                    expected: SchemaVersion::new(current_version.format_hash),
-                    found: serialized_ir.schema_version,
+                    expected: 1, // Use version 1 as default
+                    actual: serialized_ir.schema_version,
                 });
             }
         }
@@ -632,51 +706,48 @@ mod tests {
     use crate::module::{ExportDeclaration, ImportDeclaration, ImportItem};
 
     fn create_test_module() -> Module {
-        Module {
-            id: NodeId::new(1),
-            name: "test_module".to_string(),
-            imports: vec![ImportDeclaration {
-                module_path: "std::io".to_string(),
-                imported_items: vec![ImportItem {
-                    name: "println".to_string(),
-                    alias: None,
-                    is_type: false,
-                }],
-            }],
-            exports: vec![ExportDeclaration {
-                name: "main".to_string(),
-                is_type: false,
-            }],
-            statements: vec![
-                Statement::VariableDeclaration {
-                    id: NodeId::new(2),
-                    name: "x".to_string(),
-                    value: Some(Expression::Literal {
-                        id: NodeId::new(3),
-                        value: Value::I32(42),
+        let mut module = Module::new(NodeId::new(1), "test_module".to_string());
+        
+        module.add_import(ImportDeclaration::new(
+            "std::io".to_string(),
+            vec![ImportItem::value("println".to_string())],
+        ));
+        
+        module.add_export(ExportDeclaration::value(
+            "main".to_string(),
+            ContentHash::new(b"main_function"),
+        ));
+        
+        module.add_statement(Statement::VariableDeclaration {
+            id: NodeId::new(2),
+            name: "x".to_string(),
+            value: Some(Expression::Literal {
+                id: NodeId::new(3),
+                value: Value::I32(42),
+            }),
+        });
+        
+        module.add_statement(Statement::FunctionDeclaration {
+            id: NodeId::new(4),
+            name: "main".to_string(),
+            parameters: vec![],
+            body: vec![Statement::Expression {
+                id: NodeId::new(5),
+                expression: Expression::FunctionCall {
+                    id: NodeId::new(6),
+                    function: Box::new(Expression::Identifier {
+                        id: NodeId::new(7),
+                        name: "println".to_string(),
                     }),
-                },
-                Statement::FunctionDeclaration {
-                    id: NodeId::new(4),
-                    name: "main".to_string(),
-                    parameters: vec![],
-                    body: vec![Statement::Expression {
-                        id: NodeId::new(5),
-                        expression: Expression::FunctionCall {
-                            id: NodeId::new(6),
-                            function: Box::new(Expression::Identifier {
-                                id: NodeId::new(7),
-                                name: "println".to_string(),
-                            }),
-                            arguments: vec![Expression::Literal {
-                                id: NodeId::new(8),
-                                value: Value::String("Hello, World!".to_string()),
-                            }],
-                        },
+                    arguments: vec![Expression::Literal {
+                        id: NodeId::new(8),
+                        value: Value::String("Hello, World!".to_string()),
                     }],
                 },
-            ],
-        }
+            }],
+        });
+        
+        module
     }
 
     #[test]

@@ -1,0 +1,49 @@
+[package]
+name = "mir-runtime-assembly"
+version = "0.1.0"
+edition = "2021"
+description = "MIR Distributed Hot-Module-Reloading Runtime - Complete runtime assembly"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# Core MIR crates
+mir-ast = { path = "../crates/ast" }
+mir-types = { path = "../crates/types" }
+mir-vm = { path = "../crates/vm" }
+mir-runtime = { path = "../crates/runtime" }
+mir-compiler = { path = "../crates/compiler" }
+
+# Backend implementations
+# mir-backend-wasm = { path = "../crates/backend-wasm", optional = true }  # Temporarily disabled
+mir-backend-js = { path = "../crates/backend-js", optional = true }
+mir-backend-wasi = { path = "../crates/backend-wasi", optional = true }
+
+# Workspace dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+xxhash-rust = { workspace = true }
+sha2 = { workspace = true }
+opentelemetry = { workspace = true }
+opentelemetry_sdk = { workspace = true }
+opentelemetry-jaeger = { workspace = true }
+tracing = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+chrono = { workspace = true }
+
+# Runtime-specific dependencies
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"
+async-trait = "0.1"
+num_cpus = "1.0"
+
+[features]
+default = ["js", "wasi"]  # Temporarily disabled "wasm" due to NAPI issues
+# wasm = ["mir-backend-wasm"]  # Temporarily disabled
+js = ["mir-backend-js"] 
+wasi = ["mir-backend-wasi"]
+# napi feature removed - not needed for runtime assembly

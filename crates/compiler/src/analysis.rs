@@ -47,6 +47,12 @@ pub enum CompatibilityLevel {
     Breaking,
 }
 
+impl Default for ChangeAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChangeAnalyzer {
     pub fn new() -> Self {
         ChangeAnalyzer

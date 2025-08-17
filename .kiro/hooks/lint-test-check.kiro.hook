@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Lint & Test Validator",
+  "description": "Automatically runs cargo clippy to check for lint errors and cargo test to ensure all tests pass workspace-wide whenever Rust source files are modified",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "crates/**/*.rs",
+      "Cargo.toml",
+      "crates/*/Cargo.toml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run `cargo clippy --all-targets --all-features` to check for lint errors across the entire workspace.\nThen run `cargo test` to ensure all tests are passing.\n\nReport the status of both commands.\n\nFix all linting errors and warnings first. No cheating. ALL of the linting errors and warnings must be solved.\n\nThen if there were any failing tests, lets get them passing. Again, no cheating. ALL the tests must pass."
+  }
+}

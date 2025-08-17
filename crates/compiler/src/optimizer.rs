@@ -25,6 +25,12 @@ pub enum OptimizationType {
     LoopUnrolling,
 }
 
+impl Default for Optimizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Optimizer {
     pub fn new() -> Self {
         Optimizer {

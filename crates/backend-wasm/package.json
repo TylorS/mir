@@ -1,0 +1,64 @@
+{
+  "name": "@mir/backend-wasm",
+  "version": "0.1.0",
+  "description": "MIR WebAssembly backend with comprehensive NAPI bindings for Node.js",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "napi": {
+    "name": "mir-backend-wasm",
+    "triples": {
+      "defaults": true,
+      "additional": [
+        "x86_64-unknown-linux-musl",
+        "aarch64-unknown-linux-gnu",
+        "i686-pc-windows-msvc",
+        "armv7-unknown-linux-gnueabihf",
+        "aarch64-apple-darwin",
+        "aarch64-pc-windows-msvc",
+        "aarch64-unknown-linux-musl",
+        "aarch64-linux-android",
+        "x86_64-unknown-freebsd",
+        "x86_64-unknown-linux-musl",
+        "x86_64-pc-windows-msvc",
+        "x86_64-apple-darwin"
+      ]
+    }
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.0"
+  },
+  "engines": {
+    "node": ">= 10"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "node examples/napi_usage.js",
+    "version": "napi version"
+  },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "mir",
+    "hot-module-reloading",
+    "napi",
+    "rust",
+    "javascript",
+    "interop",
+    "ffi",
+    "memory-management"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/mir.git",
+    "directory": "crates/backend-wasm"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "examples/"
+  ]
+}

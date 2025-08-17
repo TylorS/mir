@@ -107,6 +107,12 @@ pub struct ContinuationState {
     pub partial_result: Option<Value>,
 }
 
+impl Default for RecursionOptimizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RecursionOptimizer {
     pub fn new() -> Self {
         RecursionOptimizer {

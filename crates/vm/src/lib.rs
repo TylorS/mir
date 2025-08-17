@@ -16,7 +16,7 @@ pub mod function_registry;
 pub mod recursion_optimizer;
 
 pub use execution::{ExecutionContext, VirtualMachine, ExecutionResult, ExecutionError, SideEffect};
-pub use instruction::{Instruction, InstructionSequence, InstructionId, LogLevel};
+pub use instruction::{Instruction, InstructionSequence, InstructionId, LogLevel, SpanStatus, MetricType};
 pub use call_stack::{CallStack, StackFrame, CallStackError, StackTraceEntry};
 pub use hot_module_reloading::HMRCoordinator;
 pub use function_registry::FunctionRegistry;

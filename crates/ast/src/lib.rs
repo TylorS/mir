@@ -14,13 +14,19 @@ pub mod statement;
 pub mod ir_serialization;
 
 pub use ast::*;
-pub use module::Module;
+pub use module::{
+    Module, ImportDeclaration, ImportItem, ExportDeclaration, ExportVisibility,
+    CompatibilityInfo, DependencyGraph, ModuleDependencyNode, DependencyEdge,
+    DependencyType, CompatibilityResult, ImportExportError, ImportExportManager,
+    ImportResolution, DefaultImportExportManager, ModuleCapabilities, MessageType,
+    ModuleMessage, MessageId, MessagePayload, ModuleError, FirstClassModuleOperations
+};
 pub use namespace::{
     ModuleNamespace, NamespaceResolver, ValueBinding, TypeBinding, 
     Visibility, ResolutionContext, ResolutionResult, NamespaceError
 };
 pub use expression::Expression;
-pub use statement::Statement;
+pub use statement::{Statement, MetricType, LogLevel};
 pub use ir_serialization::{
     IRSerializer, IRDeserializer, SerializedIR, IRContent, IRMetadata,
     IRVersion, JsonSerializationOptions, JsonDeserializationOptions,

@@ -41,6 +41,12 @@ pub struct FunctionRegistry {
     next_id: u64,
 }
 
+impl Default for FunctionRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FunctionRegistry {
     pub fn new() -> Self {
         FunctionRegistry {

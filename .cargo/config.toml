@@ -1,0 +1,38 @@
+[build]
+# Enable all features by default for comprehensive testing
+target-dir = "target"
+
+[env]
+# Set environment variables for testing
+RUST_BACKTRACE = "1"
+RUST_LOG = "debug"
+
+# Test configuration
+[target.'cfg(test)']
+rustflags = [
+    # Enable additional warnings for tests
+    "-W", "unused-imports",
+    "-W", "unused-variables", 
+    "-W", "dead-code",
+    # Enable debug assertions in tests
+    "-C", "debug-assertions=on",
+]
+
+# Profile for test builds
+[profile.test]
+# Enable debug info for better error reporting
+debug = true
+# Optimize for faster test compilation
+opt-level = 0
+# Enable overflow checks
+overflow-checks = true
+# Enable debug assertions
+debug-assertions = true
+# Disable incremental compilation for consistent test results
+incremental = false
+
+# Profile for integration tests
+[profile.integration-test]
+inherits = "test"
+# Slightly higher optimization for integration tests
+opt-level = 1

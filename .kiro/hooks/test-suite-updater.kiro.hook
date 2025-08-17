@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Test Suite Updater",
+  "description": "Automatically updates unit and e2e tests when source code changes to maintain high test coverage across all features",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "crates/*/src/**/*.rs",
+      "crates/*/Cargo.toml",
+      "Cargo.toml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Source code has been modified. Please analyze the changes and update the test suite to maintain high unit test coverage and appropriate e2e test coverage. Focus on:\n\n1. **Unit Tests**: Ensure all new functions, methods, and modules have comprehensive unit tests covering edge cases, error conditions, and normal operation\n2. **Integration Tests**: Update integration tests for any changes to public APIs or module interfaces\n3. **E2e Tests**: Add or update end-to-end tests for new features or significant behavioral changes\n4. **Test Organization**: Follow Rust testing conventions with tests in appropriate locations (inline #[cfg(test)] modules, tests/ directories, or doc tests)\n5. **Coverage Gaps**: Identify and fill any gaps in test coverage introduced by the changes\n\nConsider the multi-crate workspace structure and ensure tests are placed in the appropriate crate. Pay special attention to testing the hot-module-reloading functionality, distributed coordination, and backend code generation."
+  }
+}

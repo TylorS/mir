@@ -1,5 +1,7 @@
 # MIR 
 
+> This is a vibe-coded piece of :poop:
+
 MIR is an experimentatal IR for a hot-module-reloadable VM for higher-level languages targeting 
 WASM, with GC supported structs and arrays, with first-class support for FFI to varying hosts.
 

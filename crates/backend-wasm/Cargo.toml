@@ -9,3 +9,19 @@ mir-ast = { path = "../ast" }
 mir-compiler = { path = "../compiler" }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+# NAPI dependencies
+napi = { version = "2.16", features = ["napi8", "async"] }
+napi-derive = "2.16"
+
+# WASM runtime dependencies
+wasmtime = "25.0"
+wasmtime-wasi = "25.0"
+
+# Additional dependencies for memory management and interop
+once_cell = "1.19"
+parking_lot = "0.12"
+uuid = { workspace = true }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1.0"
+dashmap = "6.0"

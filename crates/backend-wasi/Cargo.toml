@@ -2,6 +2,9 @@
 name = "mir-backend-wasi"
 version = "0.1.0"
 edition = "2021"
+description = "WASI backend for MIR with component model support"
+license = "MIT"
+authors = ["MIR Team"]
 
 [dependencies]
 mir-types = { path = "../types" }
@@ -9,3 +12,15 @@ mir-ast = { path = "../ast" }
 mir-compiler = { path = "../compiler" }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+[dev-dependencies]
+# Additional test dependencies can be added here
+
+[features]
+default = []
+# Enable NAPI bindings for Node.js integration
+napi = []
+# Enable debugging support
+debug = []
+# Enable profiling support
+profiling = []

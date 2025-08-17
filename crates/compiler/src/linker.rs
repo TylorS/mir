@@ -17,6 +17,12 @@ pub struct DependencyGraph {
     edges: HashMap<ContentHash, HashSet<ContentHash>>,
 }
 
+impl Default for ModuleLinker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ModuleLinker {
     pub fn new() -> Self {
         ModuleLinker {
@@ -36,6 +42,12 @@ impl ModuleLinker {
     }
 }
 
+impl Default for DependencyGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DependencyGraph {
     pub fn new() -> Self {
         DependencyGraph {
@@ -46,11 +58,11 @@ impl DependencyGraph {
     
     pub fn add_node(&mut self, node: ContentHash) {
         self.nodes.insert(node);
-        self.edges.entry(node).or_insert_with(HashSet::new);
+        self.edges.entry(node).or_default();
     }
     
     pub fn add_edge(&mut self, from: ContentHash, to: ContentHash) {
-        self.edges.entry(from).or_insert_with(HashSet::new).insert(to);
+        self.edges.entry(from).or_default().insert(to);
     }
 }
 

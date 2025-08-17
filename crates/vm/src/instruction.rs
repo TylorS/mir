@@ -280,12 +280,46 @@ pub enum Instruction {
         new_hash: ContentHash,
     },
 
-    // Observability
+    // Observability and OpenTelemetry
     SpanStart {
         name: String,
         attributes: Vec<(String, String)>,
     },
     SpanEnd,
+    SpanCreate {
+        name: String,
+        attributes: Vec<(String, Value)>,
+        parent_span: Option<Box<Instruction>>,
+    },
+    SpanSetAttribute {
+        span: Box<Instruction>,
+        key: String,
+        value: Value,
+    },
+    SpanAddEvent {
+        span: Box<Instruction>,
+        name: String,
+        attributes: Vec<(String, Value)>,
+    },
+    SpanSetStatus {
+        span: Box<Instruction>,
+        status: SpanStatus,
+        message: Option<String>,
+    },
+    TraceContextGet,
+    TraceContextSet {
+        context: Box<Instruction>,
+    },
+    TraceContextPropagate {
+        target_module: ContentHash,
+        context: Box<Instruction>,
+    },
+    MetricRecord {
+        metric_type: MetricType,
+        name: String,
+        value: Box<Instruction>,
+        labels: Vec<(String, Value)>,
+    },
     LogEvent {
         level: LogLevel,
         message: String,
@@ -294,13 +328,29 @@ pub enum Instruction {
 }
 
 /// Log levels for observability
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LogLevel {
     Trace,
     Debug,
     Info,
     Warn,
     Error,
+}
+
+/// Span status for OpenTelemetry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SpanStatus {
+    Unset,
+    Ok,
+    Error,
+}
+
+/// Metric types for OpenTelemetry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MetricType {
+    Counter,
+    Gauge,
+    Histogram,
 }
 
 /// Instruction sequence with metadata

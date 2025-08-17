@@ -93,22 +93,22 @@ impl std::fmt::Display for NamespaceError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             NamespaceError::NameAlreadyExists { name, namespace } => {
-                write!(f, "Name '{}' already exists in {} namespace", name, namespace)
+                write!(f, "Name '{name}' already exists in {namespace} namespace")
             }
             NamespaceError::NameNotFound { name, namespace } => {
-                write!(f, "Name '{}' not found in {} namespace", name, namespace)
+                write!(f, "Name '{name}' not found in {namespace} namespace")
             }
             NamespaceError::AmbiguousName { name, candidates } => {
-                write!(f, "Ambiguous name '{}', candidates: {:?}", name, candidates)
+                write!(f, "Ambiguous name '{name}', candidates: {candidates:?}")
             }
             NamespaceError::VisibilityViolation { name, required_visibility } => {
-                write!(f, "Cannot access '{}', requires {:?} visibility", name, required_visibility)
+                write!(f, "Cannot access '{name}', requires {required_visibility:?} visibility")
             }
             NamespaceError::CircularDependency { modules } => {
-                write!(f, "Circular dependency detected in modules: {:?}", modules)
+                write!(f, "Circular dependency detected in modules: {modules:?}")
             }
             NamespaceError::InvalidContext { reason } => {
-                write!(f, "Invalid resolution context: {}", reason)
+                write!(f, "Invalid resolution context: {reason}")
             }
         }
     }
@@ -119,7 +119,7 @@ impl std::error::Error for NamespaceError {}
 impl ModuleNamespace {
     /// Create a new module namespace
     pub fn new(module_id: NodeId, module_name: String) -> Self {
-        let namespace_data = format!("{}:{:?}", module_name, module_id);
+        let namespace_data = format!("{module_name}:{module_id:?}");
         let namespace_hash = ContentHash::new(namespace_data.as_bytes());
         
         ModuleNamespace {
@@ -449,6 +449,7 @@ impl ResolutionContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::NodeId;
     use mir_types::TypeHash;
     
     fn create_test_value_binding(name: &str) -> ValueBinding {
@@ -579,7 +580,7 @@ mod tests {
         assert!(exported.is_some());
         
         // Should be able to import with different name
-        let mut other_namespace = ModuleNamespace::new(2, "other_module".to_string());
+        let mut other_namespace = ModuleNamespace::new(NodeId::new(2), "other_module".to_string());
         let imported_binding = exported.unwrap();
         
         assert!(other_namespace.import_value("imported_item".to_string(), imported_binding).is_ok());
@@ -588,7 +589,7 @@ mod tests {
     
     #[test]
     fn test_namespace_hash_updates() {
-        let mut namespace = ModuleNamespace::new(1, "test_module".to_string());
+        let mut namespace = ModuleNamespace::new(NodeId::new(1), "test_module".to_string());
         let initial_hash = namespace.content_hash();
         
         // Adding a binding should change the hash

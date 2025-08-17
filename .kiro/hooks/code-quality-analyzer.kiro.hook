@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Code Quality Analyzer",
+  "description": "Monitors Rust source code files for changes and provides suggestions for code quality improvements, design patterns, and best practices with focus on hexagonal architecture and test-first development",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "crates/**/*.rs",
+      "src/**/*.rs",
+      "**/*.rs"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the modified Rust code for potential improvements focusing on:\n\n1. **Code Quality & Smells**: Identify any code smells, anti-patterns, or areas that could be refactored for better maintainability\n2. **Hexagonal Architecture Compliance**: Ensure the code follows port-and-adapters/hexagonal architecture principles with proper separation of concerns\n3. **Test-First Design**: Evaluate if the code is designed with testability in mind, suggest improvements for better test coverage and isolation\n4. **Performance Optimizations**: Identify potential performance improvements while maintaining readability\n5. **Rust Best Practices**: Check for idiomatic Rust patterns, proper error handling, memory safety, and ownership patterns\n6. **Design Patterns**: Suggest appropriate design patterns that could improve the code structure\n7. **Documentation & Readability**: Assess code clarity and suggest improvements for better documentation\n\nFor each suggestion, provide:\n- Specific location and reasoning\n- Concrete code examples showing the improvement\n- Impact on maintainability, performance, or testability\n- Priority level (high/medium/low)\n\nFocus on actionable improvements that maintain existing functionality while enhancing code quality."
+  }
+}

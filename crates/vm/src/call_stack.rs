@@ -39,8 +39,8 @@ impl StackFrame {
     }
     
     pub fn set_local(&mut self, index: u32, value: Value) -> Result<(), CallStackError> {
-        if self.locals.contains_key(&index) {
-            self.locals.insert(index, value);
+        if let std::collections::hash_map::Entry::Occupied(mut e) = self.locals.entry(index) {
+            e.insert(value);
             Ok(())
         } else {
             Err(CallStackError::InvalidLocalIndex(index))
